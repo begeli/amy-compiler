@@ -1,18 +1,19 @@
 package amyc
 
 import utils._
+import ast._
 import parsing._
 
 import java.io.File
 
-object Main {
+object Main extends MainHelpers {
   private def parseArgs(args: Array[String]): Context = {
     Context(new Reporter, args.toList)
   }
 
   def main(args: Array[String]): Unit = {
     val ctx = parseArgs(args)
-    val pipeline = Lexer andThen DisplayTokens
+    val pipeline = Lexer andThen Parser andThen treePrinterN("Trees after parsing")
 
     val files = ctx.files.map(new File(_))
 
@@ -28,6 +29,19 @@ object Main {
     } catch {
       case AmycFatalError(_) =>
         sys.exit(1)
+    }
+  }
+}
+
+trait MainHelpers {
+  import NominalTreeModule.{Program => NP}
+
+  def treePrinterN(title: String): Pipeline[NP, Unit] = {
+    new Pipeline[NP, Unit] {
+      def run(ctx: Context)(v: NP) = {
+        println(title)
+        println(NominalPrinter(v))
+      }
     }
   }
 }

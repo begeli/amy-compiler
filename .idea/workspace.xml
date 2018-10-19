@@ -2,10 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b0963577-05cf-47be-bcf7-5f87a4246f7c" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/modules/amyc-build.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/amyc-build.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules/amyc.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/amyc.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/amyc/parsing/Lexer.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/amyc/parsing/Lexer.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../amy_interpreter/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../amy_interpreter/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../amy-spec.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/amyc/Main.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/amyc/Main.scala" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/target/" />
     <ignored path="$PROJECT_DIR$/project/project/target/" />
@@ -57,14 +58,44 @@
         </counts>
       </usages-collector>
     </session>
+    <session id="1921055615">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="1" />
+          <entry key="project.open.time.1" value="1" />
+          <entry key="project.open.time.6" value="1" />
+          <entry key="project.opened" value="2" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="scala" value="3" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="Scala" value="3" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="scala" value="118" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="Scala" value="118" />
+        </counts>
+      </usages-collector>
+    </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/amyc/parsing/Tokens.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="544">
-              <caret line="33" selection-start-line="33" selection-end-line="33" />
+            <state relative-caret-position="255">
+              <caret line="16" column="37" selection-start-line="16" selection-start-column="37" selection-end-line="16" selection-end-column="37" />
               <folding>
                 <element signature="e#30#80#0" expanded="true" />
               </folding>
@@ -72,11 +103,29 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/amyc/parsing/Lexer.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="147">
+            <state relative-caret-position="3774">
               <caret line="224" column="7" selection-start-line="224" selection-start-column="7" selection-end-line="224" selection-end-column="7" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/amyc/parsing/ASTConstructor.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="119">
+              <caret line="10" column="6" selection-start-line="10" selection-start-column="6" selection-end-line="10" selection-end-column="6" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/amyc/parsing/Parser.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="782">
+              <caret line="62" column="102" lean-forward="true" selection-start-line="62" selection-start-column="102" selection-end-line="62" selection-end-column="102" />
             </state>
           </provider>
         </entry>
@@ -91,13 +140,15 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/src/amyc/parsing/package.scala" />
         <option value="$PROJECT_DIR$/src/amyc/parsing/Lexer.scala" />
+        <option value="$PROJECT_DIR$/src/amyc/parsing/Tokens.scala" />
+        <option value="$PROJECT_DIR$/src/amyc/parsing/Parser.scala" />
       </list>
     </option>
   </component>
@@ -140,7 +191,8 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1539159519585" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1539973506473" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -183,11 +235,11 @@
           <value>
             <list>
               <ExternalProjectPojo>
-                <option name="name" value="amyc [file:/C:/Users/User/Desktop/CS320CLP/labs/CLP%20Labs/amy_compiler/]" />
+                <option name="name" value="amyc [file:/C:/Users/User/Desktop/amy_compiler/]" />
                 <option name="path" value="$PROJECT_DIR$" />
               </ExternalProjectPojo>
               <ExternalProjectPojo>
-                <option name="name" value="amyc-build [file:/C:/Users/User/Desktop/CS320CLP/labs/CLP%20Labs/amy_compiler/]" />
+                <option name="name" value="amyc-build [file:/C:/Users/User/Desktop/amy_compiler/]" />
                 <option name="path" value="$PROJECT_DIR$/project" />
               </ExternalProjectPojo>
             </list>
@@ -197,7 +249,6 @@
     </option>
     <option name="modificationStamps">
       <map>
-        <entry key="$PROJECT_DIR$" value="4615250416150" />
         <entry key="$PROJECT_DIR$/build.sbt" value="2893863541" />
         <entry key="$PROJECT_DIR$/project/StudentPlugin.scala" value="617950445" />
         <entry key="$PROJECT_DIR$/project/build.properties" value="2488271065" />
@@ -205,9 +256,8 @@
     </option>
     <option name="projectSyncType">
       <map>
-        <entry key="$PROJECT_DIR$" value="RE_IMPORT" />
-        <entry key="$PROJECT_DIR$/../../Lab 1/clp-lab01" value="PREVIEW" />
         <entry key="$USER_HOME$/IdeaProjects/HelloWorld2" value="PREVIEW" />
+        <entry key="$USER_HOME$/Lab 1/clp-lab01" value="PREVIEW" />
       </map>
     </option>
   </component>
@@ -228,7 +278,7 @@
     <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.07114094" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.15369128" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Designer" order="2" />
       <window_info id="Image Layers" order="3" />
@@ -304,8 +354,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/amyc/parsing/Tokens.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="544">
-          <caret line="33" selection-start-line="33" selection-end-line="33" />
+        <state relative-caret-position="255">
+          <caret line="16" column="37" selection-start-line="16" selection-start-column="37" selection-end-line="16" selection-end-column="37" />
           <folding>
             <element signature="e#30#80#0" expanded="true" />
           </folding>
@@ -314,8 +364,25 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/amyc/parsing/Lexer.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="147">
+        <state relative-caret-position="3774">
           <caret line="224" column="7" selection-start-line="224" selection-start-column="7" selection-end-line="224" selection-end-column="7" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/amyc/parsing/ASTConstructor.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="119">
+          <caret line="10" column="6" selection-start-line="10" selection-start-column="6" selection-end-line="10" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/amyc/utils/Env.scala">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/amyc/parsing/Parser.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="782">
+          <caret line="62" column="102" lean-forward="true" selection-start-line="62" selection-start-column="102" selection-end-line="62" selection-end-column="102" />
         </state>
       </provider>
     </entry>
