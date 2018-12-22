@@ -1,0 +1,61 @@
+<!doctype html>
+
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>Hello</title>
+  </head>
+
+  <body>
+    <p id="htmlText"></p>
+    <script>
+
+      // This library function fetches the wasm module at 'url', instantiates it with
+      // the given 'importObject', and returns the instantiated object instance
+      // Taken from https://github.com/WebAssembly/spec
+      function fetchAndInstantiate(url, importObject) {
+        return fetch(url).then(response =>
+          response.arrayBuffer()
+        ).then(bytes =>
+          WebAssembly.instantiate(bytes, importObject)
+        ).then(results =>
+          results.instance
+        );
+      }
+
+      function writeHtml(line) {
+          document.getElementById("htmlText").innerHTML += line + "<br>"
+      }
+
+      var memory = new WebAssembly.Memory({initial:100});
+      var importObject = {
+        system: {
+          printInt: function(arg) {
+            writeHtml(arg);
+            0;
+          },
+          printString: function(arg) {
+            var bufView = new Uint8Array(memory.buffer);
+            var i = arg;
+            var result = "";
+            while(bufView[i] != 0) {
+             result += String.fromCharCode(bufView[i]);
+             i = i + 1
+            }
+            writeHtml(result);
+            0;
+          },
+          mem: memory
+        }
+      };
+
+      fetchAndInstantiate('wasmout/Hello.wasm', importObject).then(function(instance) {
+        instance.exports.Hello_main();
+      });
+    </script>
+  </body>
+
+</html>
+
+       

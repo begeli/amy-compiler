@@ -3,6 +3,8 @@ package amyc
 import utils._
 import ast._
 import parsing._
+import analyzer._
+import codegen._
 
 import java.io.File
 
@@ -13,7 +15,13 @@ object Main extends MainHelpers {
 
   def main(args: Array[String]): Unit = {
     val ctx = parseArgs(args)
-    val pipeline = Lexer andThen Parser andThen treePrinterN("Trees after parsing")
+    val pipeline =
+      Lexer andThen
+      Parser andThen
+      NameAnalyzer andThen
+      TypeChecker andThen
+      CodeGen andThen
+      CodePrinter
 
     val files = ctx.files.map(new File(_))
 
@@ -34,7 +42,17 @@ object Main extends MainHelpers {
 }
 
 trait MainHelpers {
+  import SymbolicTreeModule.{Program => SP}
   import NominalTreeModule.{Program => NP}
+
+  def treePrinterS(title: String): Pipeline[(SP, SymbolTable), Unit] = {
+    new Pipeline[(SP, SymbolTable), Unit] {
+      def run(ctx: Context)(v: (SP, SymbolTable)) = {
+        println(title)
+        println(SymbolicPrinter(v._1)(true))
+      }
+    }
+  }
 
   def treePrinterN(title: String): Pipeline[NP, Unit] = {
     new Pipeline[NP, Unit] {
