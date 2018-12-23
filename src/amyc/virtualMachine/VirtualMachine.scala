@@ -204,7 +204,8 @@ object VirtualMachine extends Pipeline[Module, Unit] {
 
         case Load8_u =>
           //Load an i32 value from memory and zero extend
-          mainStack(msPointer) = dataMemory(updateMSPointerSingleByte()) & 0x000000FF
+          val address = updateMSPointerSingleByte()
+          mainStack(msPointer) = dataMemory(address) & 0x000000FF
           msPointer = msPointer + 1
           pc + 1
 
