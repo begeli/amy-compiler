@@ -1,5 +1,7 @@
 # EPFL_CLP_AmyCompiler
 
+Credit goes to my lovely friend Efe Acer for preparing this description. xd
+
 The project of the Computer Language Processing (CLP) course given in EPFL. It implements a compiler
 and an interpreter for *Amy Language* that is a subset of *Scala* with limited functionality. 
 
