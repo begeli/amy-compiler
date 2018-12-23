@@ -6,8 +6,8 @@ import scala.sys.process._
 import java.io._
 
 // Prints all 4 different files from a wasm Module
-object CodePrinter extends Pipeline[Module, Unit]{
-  def run(ctx: Context)(m: Module) = {
+object CodePrinter extends Pipeline[Module, Module]{
+  def run(ctx: Context)(m: Module): Module = {
     val outDirName = "wasmout"
 
     def withExt(ext: String) = s"$outDirName/${m.name}.$ext"
@@ -50,5 +50,6 @@ object CodePrinter extends Pipeline[Module, Unit]{
     m.writeHtmlWrapper(withExt("html"), withExt("wasm"))
     m.writeNodejsWrapper(withExt("js"), withExt("wasm"))
 
+    m
   }
 }
