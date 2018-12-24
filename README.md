@@ -5,8 +5,6 @@ Credit goes to my lovely friend Efe Acer for preparing this description. xd
 The project of the Computer Language Processing (CLP) course given in EPFL. It implements a compiler
 and an interpreter for *Amy Language* that is a subset of *Scala* with limited functionality. 
 
-+ *Amy Language* specifications can be found in the file `amy-spec.pdf`
-
 ## The Compiler Construction Pipeline
 
 1) *Lexer*
