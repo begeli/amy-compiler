@@ -692,93 +692,312 @@
                   i32.add
                   set_global 0
                 else
-                  get_global 0
-                  i32.const 0
-                  i32.add
-                  i32.const 77
-                  i32.store8
-                  get_global 0
+                  get_local 1
+                  drop
                   i32.const 1
-                  i32.add
-                  i32.const 97
-                  i32.store8
-                  get_global 0
-                  i32.const 2
-                  i32.add
-                  i32.const 116
-                  i32.store8
-                  get_global 0
-                  i32.const 3
-                  i32.add
-                  i32.const 99
-                  i32.store8
-                  get_global 0
-                  i32.const 4
-                  i32.add
-                  i32.const 104
-                  i32.store8
-                  get_global 0
-                  i32.const 5
-                  i32.add
-                  i32.const 32
-                  i32.store8
-                  get_global 0
-                  i32.const 6
-                  i32.add
-                  i32.const 101
-                  i32.store8
-                  get_global 0
-                  i32.const 7
-                  i32.add
-                  i32.const 114
-                  i32.store8
-                  get_global 0
-                  i32.const 8
-                  i32.add
-                  i32.const 114
-                  i32.store8
-                  get_global 0
-                  i32.const 9
-                  i32.add
-                  i32.const 111
-                  i32.store8
-                  get_global 0
-                  i32.const 10
-                  i32.add
-                  i32.const 114
-                  i32.store8
-                  get_global 0
-                  i32.const 11
-                  i32.add
-                  i32.const 33
-                  i32.store8
-                  get_global 0
-                  i32.const 12
-                  i32.add
-                  i32.const 0
-                  i32.store8
-                  get_global 0
-                  i32.const 13
-                  i32.add
-                  i32.const 0
-                  i32.store8
-                  get_global 0
-                  i32.const 14
-                  i32.add
-                  i32.const 0
-                  i32.store8
-                  get_global 0
-                  i32.const 15
-                  i32.add
-                  i32.const 0
-                  i32.store8
-                  get_global 0
-                  get_global 0
-                  i32.const 16
-                  i32.add
-                  set_global 0
-                  call $Std_printString
-                  unreachable
+                  if (result i32)
+                    get_global 0
+                    i32.const 0
+                    i32.add
+                    i32.const 69
+                    i32.store8
+                    get_global 0
+                    i32.const 1
+                    i32.add
+                    i32.const 114
+                    i32.store8
+                    get_global 0
+                    i32.const 2
+                    i32.add
+                    i32.const 114
+                    i32.store8
+                    get_global 0
+                    i32.const 3
+                    i32.add
+                    i32.const 111
+                    i32.store8
+                    get_global 0
+                    i32.const 4
+                    i32.add
+                    i32.const 114
+                    i32.store8
+                    get_global 0
+                    i32.const 5
+                    i32.add
+                    i32.const 58
+                    i32.store8
+                    get_global 0
+                    i32.const 6
+                    i32.add
+                    i32.const 32
+                    i32.store8
+                    get_global 0
+                    i32.const 7
+                    i32.add
+                    i32.const 0
+                    i32.store8
+                    get_global 0
+                    get_global 0
+                    i32.const 8
+                    i32.add
+                    set_global 0
+                    get_global 0
+                    i32.const 0
+                    i32.add
+                    i32.const 84
+                    i32.store8
+                    get_global 0
+                    i32.const 1
+                    i32.add
+                    i32.const 104
+                    i32.store8
+                    get_global 0
+                    i32.const 2
+                    i32.add
+                    i32.const 101
+                    i32.store8
+                    get_global 0
+                    i32.const 3
+                    i32.add
+                    i32.const 114
+                    i32.store8
+                    get_global 0
+                    i32.const 4
+                    i32.add
+                    i32.const 101
+                    i32.store8
+                    get_global 0
+                    i32.const 5
+                    i32.add
+                    i32.const 32
+                    i32.store8
+                    get_global 0
+                    i32.const 6
+                    i32.add
+                    i32.const 97
+                    i32.store8
+                    get_global 0
+                    i32.const 7
+                    i32.add
+                    i32.const 114
+                    i32.store8
+                    get_global 0
+                    i32.const 8
+                    i32.add
+                    i32.const 101
+                    i32.store8
+                    get_global 0
+                    i32.const 9
+                    i32.add
+                    i32.const 32
+                    i32.store8
+                    get_global 0
+                    i32.const 10
+                    i32.add
+                    i32.const 111
+                    i32.store8
+                    get_global 0
+                    i32.const 11
+                    i32.add
+                    i32.const 110
+                    i32.store8
+                    get_global 0
+                    i32.const 12
+                    i32.add
+                    i32.const 108
+                    i32.store8
+                    get_global 0
+                    i32.const 13
+                    i32.add
+                    i32.const 121
+                    i32.store8
+                    get_global 0
+                    i32.const 14
+                    i32.add
+                    i32.const 32
+                    i32.store8
+                    get_global 0
+                    i32.const 15
+                    i32.add
+                    i32.const 55
+                    i32.store8
+                    get_global 0
+                    i32.const 16
+                    i32.add
+                    i32.const 32
+                    i32.store8
+                    get_global 0
+                    i32.const 17
+                    i32.add
+                    i32.const 100
+                    i32.store8
+                    get_global 0
+                    i32.const 18
+                    i32.add
+                    i32.const 97
+                    i32.store8
+                    get_global 0
+                    i32.const 19
+                    i32.add
+                    i32.const 121
+                    i32.store8
+                    get_global 0
+                    i32.const 20
+                    i32.add
+                    i32.const 115
+                    i32.store8
+                    get_global 0
+                    i32.const 21
+                    i32.add
+                    i32.const 32
+                    i32.store8
+                    get_global 0
+                    i32.const 22
+                    i32.add
+                    i32.const 121
+                    i32.store8
+                    get_global 0
+                    i32.const 23
+                    i32.add
+                    i32.const 111
+                    i32.store8
+                    get_global 0
+                    i32.const 24
+                    i32.add
+                    i32.const 117
+                    i32.store8
+                    get_global 0
+                    i32.const 25
+                    i32.add
+                    i32.const 32
+                    i32.store8
+                    get_global 0
+                    i32.const 26
+                    i32.add
+                    i32.const 103
+                    i32.store8
+                    get_global 0
+                    i32.const 27
+                    i32.add
+                    i32.const 111
+                    i32.store8
+                    get_global 0
+                    i32.const 28
+                    i32.add
+                    i32.const 111
+                    i32.store8
+                    get_global 0
+                    i32.const 29
+                    i32.add
+                    i32.const 110
+                    i32.store8
+                    get_global 0
+                    i32.const 30
+                    i32.add
+                    i32.const 0
+                    i32.store8
+                    get_global 0
+                    i32.const 31
+                    i32.add
+                    i32.const 0
+                    i32.store8
+                    get_global 0
+                    get_global 0
+                    i32.const 32
+                    i32.add
+                    set_global 0
+                    call $String_concat
+                    call $Std_printString
+                    unreachable
+                  else
+                    get_global 0
+                    i32.const 0
+                    i32.add
+                    i32.const 77
+                    i32.store8
+                    get_global 0
+                    i32.const 1
+                    i32.add
+                    i32.const 97
+                    i32.store8
+                    get_global 0
+                    i32.const 2
+                    i32.add
+                    i32.const 116
+                    i32.store8
+                    get_global 0
+                    i32.const 3
+                    i32.add
+                    i32.const 99
+                    i32.store8
+                    get_global 0
+                    i32.const 4
+                    i32.add
+                    i32.const 104
+                    i32.store8
+                    get_global 0
+                    i32.const 5
+                    i32.add
+                    i32.const 32
+                    i32.store8
+                    get_global 0
+                    i32.const 6
+                    i32.add
+                    i32.const 101
+                    i32.store8
+                    get_global 0
+                    i32.const 7
+                    i32.add
+                    i32.const 114
+                    i32.store8
+                    get_global 0
+                    i32.const 8
+                    i32.add
+                    i32.const 114
+                    i32.store8
+                    get_global 0
+                    i32.const 9
+                    i32.add
+                    i32.const 111
+                    i32.store8
+                    get_global 0
+                    i32.const 10
+                    i32.add
+                    i32.const 114
+                    i32.store8
+                    get_global 0
+                    i32.const 11
+                    i32.add
+                    i32.const 33
+                    i32.store8
+                    get_global 0
+                    i32.const 12
+                    i32.add
+                    i32.const 0
+                    i32.store8
+                    get_global 0
+                    i32.const 13
+                    i32.add
+                    i32.const 0
+                    i32.store8
+                    get_global 0
+                    i32.const 14
+                    i32.add
+                    i32.const 0
+                    i32.store8
+                    get_global 0
+                    i32.const 15
+                    i32.add
+                    i32.const 0
+                    i32.store8
+                    get_global 0
+                    get_global 0
+                    i32.const 16
+                    i32.add
+                    set_global 0
+                    call $Std_printString
+                    unreachable
+                  end
                 end
               end
             end

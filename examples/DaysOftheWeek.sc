@@ -8,6 +8,7 @@ object DaysOftheWeek {
         case 5 => "Freedom"
         case 6 => "Saturday"
         case 7 => "Judgement"
+        case _ => error("There are only 7 days you goon")
       }
   }
 

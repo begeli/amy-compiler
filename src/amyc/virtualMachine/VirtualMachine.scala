@@ -8,477 +8,359 @@ import amyc.wasm._
 import scala.io.StdIn
 
 object VirtualMachine extends Pipeline[Module, Unit] {
+  //Define the number of slots each call frame uses(except for the locals)
+  val FRAME_DATA_FIELD_NUM: Int = 3
 
-  // Sizes for VM structures
-  val SIZE_OF_MAIN_STACK: Int = 1000000
-  val SIZE_OF_CALL_STACK: Int = 1000000
-  val SIZE_OF_DATA_MEMORY: Int = 1000000
-  val NUMBER_OF_GLOBALS: Int = 10
-
-  // Number of slots used by each call frame, excluding the locals
-  val NUMBER_OF_FRAME_DATA_FIELDS: Int = 3
-
-  // Sentinel value signifying end of program
-  val END_OF_PROGRAM: Int = -1
-
-  // Error code for Unreachable instruction
-  val UNREACHABLE_CODE: Int = -1
-
-  // Given list of functions, positions main function before others, returns main function and new list
-  def orderFunctions(unordered: List[Function]): (Function, List[Function]) = {
-    val mainFunction: Function = unordered.filter(_.isMain).head
-    val otherFunctions: List[Function] = unordered.filter(!_.isMain)
-    (mainFunction, mainFunction :: otherFunctions)
-  }
-
-  // Given list of functions, returns a map that holds the starting index for each function name
-  def mapFunctionsToIndices(functions: List[Function]): Map[String, Int] = {
-    functions.map(function => (function.name, (function.code <:> Return).instructions))
-      .flatMap(pair => pair._2.zipWithIndex.map { instrIndexPair =>
-        if (instrIndexPair._2 == 0) (instrIndexPair._1, pair._1)
-        else (instrIndexPair._1, "")
-      }).zipWithIndex.filter(pair => pair._1._2 != "").map(pair => (pair._1._2, pair._2)).toMap
-  }
-
-  // Given list of functions, converts them to an array of instructions
-  // and inserts Return instruction at the end of each function
-  def functionsToInstructionArray(functions: List[Function]): Array[Instructions.Instruction] = {
-    functions.flatMap(function => (function.code <:> Return).instructions).toArray
-  }
-
-  // Given the pointer of If instruction, returns the indices of matching Else and End instructions
-  def findBoundariesOfIfInstruction(ifInstructionPointer: Int, instructionMemory: Array[Instructions.Instruction]): (Int, Int) = {
-    // Find the end of if block
-    var nestedCounter = 0
-    var elseInstructionPointer = ifInstructionPointer
-
-    // Iterate over the instructions between if and else until it finds the matching else instruction
-    do {
-      val currentInstruction = instructionMemory(elseInstructionPointer)
-      if (currentInstruction == If_i32 || currentInstruction == If_void)
-        nestedCounter = nestedCounter + 1
-      else if (currentInstruction == Else)
-        nestedCounter = nestedCounter - 1
-
-      elseInstructionPointer = elseInstructionPointer + 1
-    } while (nestedCounter != 0)
-
-    // After this line, elseInstructionPointer points to Else instruction
-    elseInstructionPointer = elseInstructionPointer - 1
-
-    // Find the end of else block
-    var endInstructionPointer = elseInstructionPointer
-
-    // Iterate over the instructions between else and end until it finds the matching end instructions
-    do {
-      val currentInstruction = instructionMemory(endInstructionPointer)
-      if (currentInstruction == Else)
-        nestedCounter = nestedCounter + 1
-      else if (currentInstruction == End)
-        nestedCounter = nestedCounter - 1
-
-      endInstructionPointer = endInstructionPointer + 1
-    } while (nestedCounter != 0)
-
-    // After this line, endInstructionPointer points to End instruction
-    endInstructionPointer = endInstructionPointer - 1
-
-    // Return the pair of indices
-    (elseInstructionPointer, endInstructionPointer)
-  }
+  //Define EOP which indicates the end of program
+  val EOP: Int = -1
 
   override def run(ctx: Context)(m: Module): Unit = {
+    //Define program counter and instruction memory
+    //Put main method before other methods
+    val (mainMethod, methods) = (m.functions.filter(_.isMain).head, m.functions.filter(_.isMain) ::: m.functions.filter(!_.isMain))
+    //Convert methods to array of instructions
+    val instMem: Array[Instructions.Instruction] = methods.flatMap(function => (function.code <:> Return).instructions).toArray
+    var pc = 0
 
-    // Define instruction memory and PC
-    val (mainFunction, functions) = orderFunctions(m.functions)
-    val instructionMemory: Array[Instructions.Instruction] = functionsToInstructionArray(functions)
-    var programCounter = 0 // Always points to next instruction to be executed
+    //Define method call stack
+    val CALL_STACK_SIZE: Int = 4000000
+    val callStack: Array[Int] = new Array[Int](CALL_STACK_SIZE)
+    var csPointer = 0
 
-    // Define main stack, the working stack of WebAssembly
-    val mainStack: Array[Int] = new Array[Int](SIZE_OF_MAIN_STACK)
-    var msPointer = 0 // Always points to the first unused slot in main stack
+    //Define the main stack
+    val MAIN_STACK_SIZE: Int = 4000000
+    val mainStack: Array[Int] = new Array[Int](MAIN_STACK_SIZE)
+    var msPointer = 0
 
-    // Define function call stack
-    val callStack: Array[Int] = new Array[Int](SIZE_OF_CALL_STACK)
-    var csPointer = 0 // Always points to the base slot (ie return address) of the current function
+    //Initialize stack frame for main method
+    callStack(0) = EOP
+    callStack(1) = 0
+    callStack(2) = mainMethod.locals
 
-    /*
-     *  Each call frame holds the following:
-     *  (0th slot) return address of the function
-     *  (1st slot) number of locals of the function's caller
-     *  (2nd slot) number of locals of the function itself
-     *  (rest) locals belonging to the function
-     */
+    //Define data memory and global memory
+    val DATA_MEMORY_SIZE: Int = 4000000
+    val dataMem: Array[Byte] = new Array[Byte](DATA_MEMORY_SIZE)
+    val GLOBAL_NUM: Int = 10
+    val globals: Array[Int] = new Array[Int](GLOBAL_NUM)
 
-    // Initialize call frame for main function
-    callStack(0) = END_OF_PROGRAM // Return address for main
-    callStack(1) = 0 // Number of locals of caller (taken to be 0 for main)
-    callStack(2) = mainFunction.locals // Number of locals of main
-
-    // Define data memory, linear memory of bytes
-    val dataMemory: Array[Byte] = new Array[Byte](SIZE_OF_DATA_MEMORY)
-
-    // Define memory for globals, 0th global is always used for memory boundary
-    val globals: Array[Int] = new Array[Int](NUMBER_OF_GLOBALS)
-
-    // Map that holds the index for each function
-    val functionNamesAndStartingIndices: Map[String, Int] = mapFunctionsToIndices(functions)
-
-    // Map to record the index for each label, this is done as instructions are executed
-    var labelsAndIndices: Map[String, Integer] = Map()
-
-    // Map to record the index of matching if/else/end instructions.
-    var ifElseEndIndices: Map[Int, (Int, Int)] = Map()
-
-    // Execution loop
-    while (true) {
-      if (programCounter == END_OF_PROGRAM) return
-
-      val instruction: Instructions.Instruction = instructionMemory(programCounter)
-      programCounter = executeInstruction(instruction)
+    //Hold the index of each method
+    val methodStartIndices: Map[String, Int] = {
+      methods.map(function => (function.name, (function.code <:> Return).instructions))
+        .flatMap(pair => pair._2.zipWithIndex.map { instrIndexPair =>
+          if (instrIndexPair._2 == 0) (instrIndexPair._1, pair._1)
+          else (instrIndexPair._1, "")
+        }).zipWithIndex.filter(pair => pair._1._2 != "").map(pair => (pair._1._2, pair._2)).toMap
     }
 
-    // Function to match and handle WASM instructions, returns next value of PC
+    //Record the index of matching if else end instructions
+    var iteEndIndices: Map[Int, (Int, Int)] = Map()
+
+    //Record the index for each label
+    var labelsAndIndices: Map[String, Integer] = Map()
+
+    while (true) {
+      if (pc == EOP) return
+      val instruction: Instructions.Instruction = instMem(pc)
+      pc = executeInstruction(instruction)
+    }
+
+    def movePC(value: Int): Int = {
+      mainStack(msPointer) = value
+      msPointer = msPointer + 1
+      pc + 1
+    }
+
+    def updateMSPointer(): (Int, Int) = {
+      msPointer = msPointer - 1
+      val value1 = mainStack(msPointer)
+      msPointer = msPointer - 1
+      val value2 = mainStack(msPointer)
+      (value1, value2)
+    }
+
+    def updateMSPointerForAndOr(): (Boolean, Boolean) = {
+      msPointer = msPointer - 1
+      val value1 = !(mainStack(msPointer) == 0)
+      msPointer = msPointer - 1
+      val value2 = !(mainStack(msPointer) == 0)
+      (value1, value2)
+    }
+
+    def store(address: Int, value: Int): Unit = {
+      dataMem(address + 0) = ((value & 0x000000FF) >> 0 * 8).toByte
+      dataMem(address + 1) = ((value & 0x0000FF00) >> 1 * 8).toByte
+      dataMem(address + 2) = ((value & 0x00FF0000) >> 2 * 8).toByte
+      dataMem(address + 3) = ((value & 0xFF000000) >> 3 * 8).toByte
+    }
+
+    def load(address: Int): Int = {
+      val byte0: Int = (dataMem(address + 3) & 0xFF) << 24
+      val byte1: Int = (dataMem(address + 2) & 0xFF) << 16
+      val byte2: Int = (dataMem(address + 1) & 0xFF) << 8
+      val byte3: Int = (dataMem(address + 0) & 0xFF) << 0
+
+      byte0 + byte1 + byte2 + byte3
+    }
+
+    def updateMSPointerSingleByte(): Int = {
+      msPointer = msPointer - 1
+      mainStack(msPointer)
+    }
+
+    def findMatchingElseInstruction(elsePointer: Int, nestedCounter: Int): Int = {
+      var nc = nestedCounter
+      var ep = elsePointer
+      do {
+        val currentInstruction = instMem(ep)
+        if (currentInstruction == If_i32 || currentInstruction == If_void)
+          nc = nc + 1
+        else if (currentInstruction == Else)
+          nc = nc - 1
+        ep = ep + 1
+      } while (nc != 0)
+
+      ep
+    }
+
+    def findMatchingEndInstruction(endPointer: Int, nestedCounter: Int): Int = {
+      var nc = nestedCounter
+      var ep = endPointer
+      do {
+        val currentInstruction = instMem(ep)
+        if (currentInstruction == Else)
+          nc = nc + 1
+        else if (currentInstruction == End)
+          nc = nc - 1
+
+        ep = ep + 1
+      } while (nc != 0)
+
+      ep
+    }
+
+    def executeIfInstructions(): Int = {
+      msPointer = msPointer - 1
+      val ifCondVal = mainStack(msPointer)
+      val (elseInstruction, endInstruction) = iteEndIndices.getOrElse(pc, {
+        val elseEndPair = {
+          val nestedCounter = 0
+          var elsePointer = pc
+
+          elsePointer = findMatchingElseInstruction(elsePointer, nestedCounter)
+          elsePointer = elsePointer - 1
+
+          var endPointer = elsePointer
+          endPointer = findMatchingEndInstruction(endPointer, nestedCounter)
+          endPointer = endPointer - 1
+
+          (elsePointer, endPointer)
+        }
+        iteEndIndices += (pc -> (elseEndPair._1, elseEndPair._2))
+        elseEndPair
+      })
+
+      //Execute the instruction between two indices
+      def executeBlock(firstIndex: Int, lastIndex: Int): Int = {
+        pc = firstIndex
+        var branch = false
+
+        //Execute the instructions until reached the last instruction or branch
+        while (pc != lastIndex && !branch) {
+          val current = instMem(pc)
+          if (current.isInstanceOf[Br]) branch = true
+          else pc = executeInstruction(current)
+        }
+
+        if (instMem(pc).isInstanceOf[Br]) executeInstruction(instMem(pc))
+        else endInstruction + 1
+      }
+
+      //Execute if or else
+      if (ifCondVal != 0) executeBlock(pc + 1, elseInstruction)
+      else executeBlock(elseInstruction + 1, endInstruction)
+    }
+
+    def executeNonStdInstructions(name: String): Int = {
+      val otherMethod = methods.filter(_.name == name).head
+      val returnAddress = pc + 1
+      val numOfLocalsCur = callStack(csPointer + 2)
+      val numOfLocalsOther = otherMethod.args + otherMethod.locals
+
+      csPointer = csPointer + FRAME_DATA_FIELD_NUM + numOfLocalsCur
+      callStack(csPointer) = returnAddress
+      callStack(csPointer + 1) = numOfLocalsCur
+      callStack(csPointer + 2) = numOfLocalsOther
+
+      var argCounter = otherMethod.args
+      while (argCounter > 0) {
+        msPointer = msPointer - 1
+        callStack(argCounter + csPointer + FRAME_DATA_FIELD_NUM - 1) = mainStack(msPointer)
+        argCounter = argCounter - 1
+      }
+      methodStartIndices(otherMethod.name)
+    }
+
+    //Method to match and handle web assembly instructions
     def executeInstruction(instruction: Instructions.Instruction): Int = {
       instruction match {
-
-        // Load an int32 constant to the stack
-        case Const(value) =>
-          mainStack(msPointer) = value
+        case GetLocal(index) =>
+          mainStack(msPointer) = callStack(index + FRAME_DATA_FIELD_NUM + csPointer)
           msPointer = msPointer + 1
-          programCounter + 1
+          pc + 1
 
-        // Numeric binary operations
+        case GetGlobal(index) =>
+          mainStack(msPointer) = globals(index)
+          msPointer = msPointer + 1
+          pc + 1
+
+        case SetLocal(index) =>
+          msPointer = msPointer - 1
+          callStack(index + FRAME_DATA_FIELD_NUM + csPointer) = mainStack(msPointer)
+          pc + 1
+
+        case SetGlobal(index) =>
+          msPointer = msPointer - 1
+          globals(index) = mainStack(msPointer)
+          pc + 1
+
+        case Store =>
+          val (value, address) = updateMSPointer()
+          store(address, value)
+          pc + 1
+
+        case Store8 =>
+          val leastSignificantByte: Int = updateMSPointerSingleByte() & 0x000000FF
+          msPointer = msPointer - 1
+          val address: Int = mainStack(msPointer)
+          dataMem(address) = leastSignificantByte.toByte
+          pc + 1
+
+        case Load =>
+          msPointer = msPointer - 1
+
+          //Load address
+          mainStack(msPointer) = load(mainStack(msPointer))
+          msPointer = msPointer + 1
+          pc = pc + 1
+          pc
+
+        case Load8_u =>
+          //Load an i32 value from memory and zero extend
+          val address = updateMSPointerSingleByte()
+          mainStack(msPointer) = dataMem(address) & 0x000000FF
+          msPointer = msPointer + 1
+          pc + 1
+
+        case Loop(label) =>
+          labelsAndIndices += (label -> pc)
+          pc + 1
+
+        case Br(label) =>
+          labelsAndIndices(label) + 1
+
+        case Call(name) =>
+          name match {
+            case "Std_readInt" =>
+              mainStack(msPointer) = StdIn.readInt()
+              msPointer = msPointer + 1
+              pc + 1
+
+            case "Std_printInt" =>
+              println(mainStack(msPointer - 1))
+              pc + 1
+
+            case "Std_readString" =>
+              //Write string to memory
+              val mkStringCode: Code = CodeGenUtils.mkString(StdIn.readLine())
+              val tempPC = pc
+              mkStringCode.instructions.foreach(executeInstruction)
+              tempPC + 1
+
+            case "Std_printString" =>
+              var string = ""
+              var counter = mainStack(msPointer - 1)
+              //Loop until reached null terminator
+              while (dataMem(counter) != 0) {
+                string = string ++ dataMem(counter).toChar.toString
+                counter = counter + 1
+              }
+              println(string)
+              pc + 1
+
+            case _ =>
+              executeNonStdInstructions(name)
+          }
+
+        case Const(value) =>
+          movePC(value)
 
         case Add =>
-          msPointer = msPointer - 1
-          val value1 = mainStack(msPointer)
-
-          msPointer = msPointer - 1
-          val value2 = mainStack(msPointer)
-
-          mainStack(msPointer) = value2 + value1
-          msPointer = msPointer + 1
-          programCounter + 1
+          val (value1, value2) = updateMSPointer()
+          movePC(value1 + value2)
 
         case Sub =>
-          msPointer = msPointer - 1
-          val value1 = mainStack(msPointer)
-
-          msPointer = msPointer - 1
-          val value2 = mainStack(msPointer)
-
-          mainStack(msPointer) = value2 - value1
-          msPointer = msPointer + 1
-          programCounter + 1
+          val (value1, value2) = updateMSPointer()
+          movePC(value2 - value1)
 
         case Mul =>
-          msPointer = msPointer - 1
-          val value1 = mainStack(msPointer)
-
-          msPointer = msPointer - 1
-          val value2 = mainStack(msPointer)
-
-          mainStack(msPointer) = value2 * value1
-          msPointer = msPointer + 1
-          programCounter + 1
+          val (value1, value2) = updateMSPointer()
+          movePC(value2 * value1)
 
         case Div =>
-          msPointer = msPointer - 1
-          val value1 = mainStack(msPointer)
-
-          msPointer = msPointer - 1
-          val value2 = mainStack(msPointer)
-
-          mainStack(msPointer) = value2 / value1
-          msPointer = msPointer + 1
-          programCounter + 1
+          val (value1, value2) = updateMSPointer()
+          movePC(value2 / value1)
 
         case Rem =>
-          msPointer = msPointer - 1
-          val value1 = mainStack(msPointer)
+          val (value1, value2) = updateMSPointer()
+          movePC(value2 % value1)
 
-          msPointer = msPointer - 1
-          val value2 = mainStack(msPointer)
+        case Lt_s =>
+          val (value1, value2) = updateMSPointer()
+          movePC(if (value2 < value1) 1 else 0)
 
-          mainStack(msPointer) = value2 % value1
-          msPointer = msPointer + 1
-          programCounter + 1
-
-        // Logical binary operations
+        case Le_s =>
+          val (value1, value2) = updateMSPointer()
+          movePC(if (value2 <= value1) 1 else 0)
 
         case And =>
-          msPointer = msPointer - 1
-          val value1 = !(mainStack(msPointer) == 0)
-
-          msPointer = msPointer - 1
-          val value2 = !(mainStack(msPointer) == 0)
-
-          mainStack(msPointer) = if (value2 && value1) 1 else 0
-          msPointer = msPointer + 1
-          programCounter + 1
+          val (value1, value2) = updateMSPointerForAndOr()
+          movePC(if (value2 && value1) 1 else 0)
 
         case Or =>
-          msPointer = msPointer - 1
-          val value1 = !(mainStack(msPointer) == 0)
+          val (value1, value2) = updateMSPointerForAndOr()
+          movePC(if (value2 || value1) 1 else 0)
 
-          msPointer = msPointer - 1
-          val value2 = !(mainStack(msPointer) == 0)
-
-          mainStack(msPointer) = if (value2 || value1) 1 else 0
-          msPointer = msPointer + 1
-          programCounter + 1
-
-        // Comparison operations
+        case Eq =>
+          val (value1, value2) = updateMSPointer()
+          movePC(if (value2 == value1) 1 else 0)
 
         case Eqz =>
           msPointer = msPointer - 1
           val value = mainStack(msPointer)
+          movePC(if (value == 0) 1 else 0)
 
-          mainStack(msPointer) = if (value == 0) 1 else 0
-          msPointer = msPointer + 1
-          programCounter + 1
-
-        case Lt_s =>
-          msPointer = msPointer - 1
-          val value1 = mainStack(msPointer)
-
-          msPointer = msPointer - 1
-          val value2 = mainStack(msPointer)
-
-          mainStack(msPointer) = if (value2 < value1) 1 else 0
-          msPointer = msPointer + 1
-          programCounter + 1
-
-        case Le_s =>
-          msPointer = msPointer - 1
-          val value1 = mainStack(msPointer)
-
-          msPointer = msPointer - 1
-          val value2 = mainStack(msPointer)
-
-          mainStack(msPointer) = if (value2 <= value1) 1 else 0
-          msPointer = msPointer + 1
-          programCounter + 1
-
-        case Eq =>
-          msPointer = msPointer - 1
-          val value1 = mainStack(msPointer)
-
-          msPointer = msPointer - 1
-          val value2 = mainStack(msPointer)
-
-          mainStack(msPointer) = if (value2 == value1) 1 else 0
-          msPointer = msPointer + 1
-          programCounter + 1
-
-        // Discards the item on top of the stack
         case Drop =>
           msPointer = msPointer - 1
-          programCounter + 1
+          pc + 1
 
-        // Instruction to signify the end of a function
         case Return =>
-          val newProgramCounter = callStack(csPointer) // Set aside return address
-          csPointer = csPointer - callStack(csPointer + 1) - NUMBER_OF_FRAME_DATA_FIELDS // Discard call frame
-          newProgramCounter // Set PC to return address
+          val tempReturnAddress = callStack(csPointer)
+          csPointer = csPointer - callStack(csPointer + 1) - FRAME_DATA_FIELD_NUM
+          tempReturnAddress
 
-        // Conditional instructions
-        case If_i32 | If_void =>
-          msPointer = msPointer - 1
-          val ifConditionValue = mainStack(msPointer)
+        case If_i32 =>
+          executeIfInstructions()
 
-          // Try to get indices from map if they exist, run the helper function to find and add them to map otherwise
-          val elseEndIndicesOption = ifElseEndIndices.get(programCounter)
-          val (elseInstruction, endInstruction) = elseEndIndicesOption.getOrElse{
-            val elseEndPair = findBoundariesOfIfInstruction(programCounter, instructionMemory)
-            ifElseEndIndices += (programCounter -> (elseEndPair._1, elseEndPair._2))
-            elseEndPair
-          }
-
-          // This method executes the instruction between two indices
-          def blockExecutor(indexOfFirstInstr: Int, indexOfLastInstruction: Int): Int = {
-            // Program Counter points to first instruction of if block
-            programCounter = indexOfFirstInstr
-            var isBranch = false
-
-            // Run the instructions inside the block until it is the last instruction or branch instruction
-            while (programCounter != indexOfLastInstruction && !isBranch) {
-              val currentInstruction = instructionMemory(programCounter)
-
-              if (currentInstruction.isInstanceOf[Br]) isBranch = true
-              else programCounter = executeInstruction(currentInstruction)
-            }
-
-            // Return the new program counter depending on last instruction of block
-            if (instructionMemory(programCounter).isInstanceOf[Br]) executeInstruction(instructionMemory(programCounter))
-            else endInstruction + 1
-          }
-
-          // Run either if or else block depending on the condition value
-          if (ifConditionValue != 0) blockExecutor(programCounter + 1, elseInstruction)
-          else blockExecutor(elseInstruction + 1, endInstruction)
+        case If_void =>
+          executeIfInstructions()
 
         case End =>
-          programCounter + 1 // Just fall through
-
-        case Loop(label) =>
-          labelsAndIndices += (label -> programCounter) // Record label and its index
-          programCounter + 1 // Fall through
-
-        case Br(label) =>
-          labelsAndIndices(label) + 1 // Look up and branch to index of label
-
-        case Call(name) =>
-          name match {
-            // Built-in functions
-            case "Std_printInt" =>
-              val value = mainStack(msPointer - 1)
-              println(value)
-              programCounter + 1
-
-            case "Std_printString" =>
-              val start = mainStack(msPointer - 1)
-              var stringVal = ""
-              var stringCounter = start
-              // loop and and accumulate chars until null terminator
-              while (dataMemory(stringCounter) != 0) {
-                stringVal = stringVal ++ dataMemory(stringCounter).toChar.toString
-                stringCounter = stringCounter + 1
-              }
-              println(stringVal)
-              programCounter + 1
-
-            case "Std_readInt" =>
-              val value: Int = StdIn.readInt()
-              mainStack(msPointer) = value
-              msPointer = msPointer + 1
-              programCounter + 1
-
-            case "Std_readString" =>
-              val value: String = StdIn.readLine()
-              val mkStringCode: Code = CodeGenUtils.mkString(value) // generate code that writes the string to memory
-            val previousProgramCounter = programCounter
-              mkStringCode.instructions.foreach(executeInstruction) // stop program execution, execute generated code
-              previousProgramCounter + 1 // resume program execution from where we left off
-
-            // User defined functions
-            case _ =>
-              val targetFunction = functions.filter(_.name == name).head
-
-              // prepare the new call frame
-              val returnAddress = programCounter + 1
-              val numOfLocalsOfCurrent = callStack(csPointer + 2)
-              val numOfLocalsOfCallee = targetFunction.args + targetFunction.locals
-
-              csPointer = csPointer + NUMBER_OF_FRAME_DATA_FIELDS + numOfLocalsOfCurrent
-              callStack(csPointer) = returnAddress
-              callStack(csPointer + 1) = numOfLocalsOfCurrent
-              callStack(csPointer + 2) = numOfLocalsOfCallee
-
-              // pop arguments from main stack and place on call stack
-              var argCounter = targetFunction.args
-              while (argCounter > 0) {
-                msPointer = msPointer - 1
-                val localValue = mainStack(msPointer)
-                callStack(argCounter + csPointer + NUMBER_OF_FRAME_DATA_FIELDS - 1) = localValue
-                argCounter = argCounter - 1
-              }
-
-              // jump to index of called function
-              functionNamesAndStartingIndices(targetFunction.name)
-          }
+          pc + 1
 
         case Unreachable =>
-          System.exit(UNREACHABLE_CODE) // Exit with error code
-          END_OF_PROGRAM
-
-        // Operations for locals (parameters, local variables)
-        case GetLocal(index) =>
-          val value = callStack(index + NUMBER_OF_FRAME_DATA_FIELDS + csPointer)
-          mainStack(msPointer) = value
-          msPointer = msPointer + 1
-          programCounter + 1
-
-        case SetLocal(index) =>
-          msPointer = msPointer - 1
-          val value = mainStack(msPointer)
-
-          callStack(index + NUMBER_OF_FRAME_DATA_FIELDS + csPointer) = value
-          programCounter + 1
-
-        // Operations for globals
-        case GetGlobal(index) =>
-          mainStack(msPointer) = globals(index)
-          msPointer = msPointer + 1
-          programCounter + 1
-
-        case SetGlobal(index) =>
-          msPointer = msPointer - 1
-          val value = mainStack(msPointer)
-          globals(index) = value
-          programCounter + 1
-
-        // Memory operations
-
-        // Store an i32 value to memory
-        // Expects value on top of the stack, and address under it
-        case Store =>
-          msPointer = msPointer - 1
-          val value: Int = mainStack(msPointer)
-
-          msPointer = msPointer - 1
-          val address: Int = mainStack(msPointer)
-          dataMemory(address + 3) = ((value & 0xFF000000) >> 3 * 8).toByte
-          dataMemory(address + 2) = ((value & 0x00FF0000) >> 2 * 8).toByte
-          dataMemory(address + 1) = ((value & 0x0000FF00) >> 1 * 8).toByte
-          dataMemory(address + 0) = ((value & 0x000000FF) >> 0 * 8).toByte
-
-          programCounter + 1
-
-        // Load an i32 value from memory
-        // Expects address on top of the stack
-        case Load =>
-          msPointer = msPointer - 1
-          val address: Int = mainStack(msPointer)
-
-          val byte3: Int = (dataMemory(address + 0) & 0xFF) << 0
-          val byte2: Int = (dataMemory(address + 1) & 0xFF) << 8
-          val byte1: Int = (dataMemory(address + 2) & 0xFF) << 16
-          val byte0: Int = (dataMemory(address + 3) & 0xFF) << 24
-
-          val value = byte0 + byte1 + byte2 + byte3
-
-          mainStack(msPointer) = value
-          msPointer = msPointer + 1
-
-          programCounter = programCounter + 1
-          programCounter
-
-        // Store a single byte value to memory (the least significant byte of the operand)
-        // Expects value on top of the stack, and address under it
-        case Store8 =>
-          msPointer = msPointer - 1
-          val value: Int = mainStack(msPointer)
-          val leastSignificantByte: Int = value & 0x000000FF
-
-          msPointer = msPointer - 1
-          val address: Int = mainStack(msPointer)
-
-          dataMemory(address) = leastSignificantByte.toByte
-          programCounter + 1
-
-        // Load an i32 value from memory, zero extend it to the size of an i32
-        // Expects address on top of the stack
-        case Load8_u =>
-          msPointer = msPointer - 1
-          val address: Int = mainStack(msPointer)
-
-          val value: Int = dataMemory(address) & 0x000000FF
-          mainStack(msPointer) = value
-          msPointer = msPointer + 1
-
-          programCounter + 1
+          val ERROR_CODE: Int = -1
+          System.exit(ERROR_CODE)
+          EOP
       }
     }
   }
