@@ -143,14 +143,13 @@ object VirtualMachine extends Pipeline[Module, Unit] {
       val ifCondVal = mainStack(msPointer)
       val (elseInstruction, endInstruction) = iteEndIndices.getOrElse(pc, {
         val elseEndPair = {
-          val nestedCounter = 0
           var elsePointer = pc
 
-          elsePointer = findMatchingElseInstruction(elsePointer, nestedCounter)
+          elsePointer = findMatchingElseInstruction(elsePointer, 0)
           elsePointer = elsePointer - 1
 
           var endPointer = elsePointer
-          endPointer = findMatchingEndInstruction(endPointer, nestedCounter)
+          endPointer = findMatchingEndInstruction(endPointer, 0)
           endPointer = endPointer - 1
 
           (elsePointer, endPointer)
