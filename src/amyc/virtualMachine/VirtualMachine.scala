@@ -107,33 +107,33 @@ object VirtualMachine extends Pipeline[Module, Unit] {
       mainStack(msPointer)
     }
 
-    def findMatchingElseInstruction(elsePointer: Int, nestedCounter: Int): Int = {
-      var nc = nestedCounter
+    def findMatchingElseInstruction(elsePointer: Int, counter: Int): Int = {
+      var countr = counter
       var ep = elsePointer
       do {
         val currentInstruction = instMem(ep)
         if (currentInstruction == If_i32 || currentInstruction == If_void)
-          nc = nc + 1
+          countr = countr + 1
         else if (currentInstruction == Else)
-          nc = nc - 1
+          countr = countr - 1
         ep = ep + 1
-      } while (nc != 0)
+      } while (countr != 0)
 
       ep
     }
 
-    def findMatchingEndInstruction(endPointer: Int, nestedCounter: Int): Int = {
-      var nc = nestedCounter
+    def findMatchingEndInstruction(endPointer: Int, counter: Int): Int = {
+      var countr = counter
       var ep = endPointer
       do {
         val currentInstruction = instMem(ep)
         if (currentInstruction == Else)
-          nc = nc + 1
+          countr = countr + 1
         else if (currentInstruction == End)
-          nc = nc - 1
+          countr = countr - 1
 
         ep = ep + 1
-      } while (nc != 0)
+      } while (countr != 0)
 
       ep
     }
