@@ -2,7 +2,7 @@
 
 # Example Programs for the Virtual Machine
 Our extension was related to the execution of the compiler, thus we did not add a new feature to the language itself.
-Every program in the examples folder should run directly we enter the run command in the sbt mode.
+Every program in the examples folder should run directly when we enter the run command in the sbt mode.
 
 ## Example run:
 	
