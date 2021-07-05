@@ -1,5 +1,5 @@
 # EPFL_CLP_AmyCompiler
-The project of the Computer Language Processing (CLP) course given in EPFL. It implements a compiler, an interpreter and a virtual machine for the Amy Language which is a subset of Scala with limited functionality.
+The project of the Computer Language Processing (CLP) course given at EPFL. It implements a compiler, an interpreter and a virtual machine for the Amy Language which is a subset of Scala with limited functionality.
 
 * Amy Language specifications can be found in the file `amy-spec.pdf`
 
